@@ -1,4 +1,5 @@
-import { useCallback, useRef, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, FlatList, Pressable, StyleSheet, Switch, TextInput } from 'react-native';
 import ConfettiCannon from 'react-native-confetti-cannon';
 
@@ -8,6 +9,7 @@ import { Collapsible } from '@/components/ui/collapsible';
 import { Quote, quotes } from '@/constants/phrasesCultes';
 import { useThemeToggle } from '@/hooks/use-theme-toggle';
 
+const STORAGE_KEY = 'user_quotes';
 const RAINBOW = ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#9400D3'];
 
 export default function HomeScreen() {
@@ -20,7 +22,16 @@ export default function HomeScreen() {
   const { isDark, toggleTheme } = useThemeToggle();
   const wiggleAnim = useRef(new Animated.Value(0)).current;
 
-  // Easter egg 1: Konami — tap title 7 times to flip quotes
+  // Load saved user quotes on mount
+  useEffect(() => {
+    AsyncStorage.getItem(STORAGE_KEY).then((stored) => {
+      if (stored) {
+        const userQuotes: Quote[] = JSON.parse(stored);
+        setAllQuotes((prev) => [...userQuotes, ...prev]);
+      }
+    });
+  }, []);
+
   const [flipped, setFlipped] = useState(false);
   const flipAnim = useRef(new Animated.Value(0)).current;
   const titleTapCount = useRef(0);
@@ -42,7 +53,6 @@ export default function HomeScreen() {
     }
   };
 
-  // Easter egg 2: reversed quotes on long-press
   const [reversedIds, setReversedIds] = useState<Set<string>>(new Set());
   const toggleReversed = useCallback((id: string) => {
     setReversedIds((prev) => {
@@ -53,7 +63,6 @@ export default function HomeScreen() {
     });
   }, []);
 
-  // Easter egg 3: confetti on Roxane
   const [showConfetti, setShowConfetti] = useState(false);
   const confettiRef = useRef<ConfettiCannon | null>(null);
 
@@ -67,7 +76,6 @@ export default function HomeScreen() {
     }
   };
 
-  // Easter egg 4: secret quote "42"
   const addQuote = () => {
     if (!quoteText.trim() || !authorName.trim()) return;
     let finalText = quoteText.trim();
@@ -81,14 +89,20 @@ export default function HomeScreen() {
       text: finalText,
       author: finalAuthor,
     };
-    setAllQuotes((prev) => [newQuote, ...prev]);
+    setAllQuotes((prev) => {
+      const updated = [newQuote, ...prev];
+      // Persist only user-added quotes (those not in the original list)
+      const originalIds = new Set(quotes.map((q) => q.id));
+      const userQuotes = updated.filter((q) => !originalIds.has(q.id));
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(userQuotes));
+      return updated;
+    });
     setQuoteText('');
     setAuthorName('');
     setFormOpen(false);
   };
 
-  // Easter egg 5: color party — triple-tap switch
-  const [colorParty, setColorParty] = useState(false);
+   const [colorParty, setColorParty] = useState(false);
   const switchTapCount = useRef(0);
   const switchTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const colorPartyIndex = useRef(new Animated.Value(0)).current;
@@ -112,7 +126,7 @@ export default function HomeScreen() {
     }
   };
 
-  // Wiggle (existing Dima easter egg)
+  // Wiggle
   const triggerWiggle = () => {
     Animated.sequence([
       Animated.timing(wiggleAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
@@ -138,21 +152,28 @@ export default function HomeScreen() {
     const isReversed = reversedIds.has(item.id);
     const displayText = isReversed ? item.text.split('').reverse().join('') : item.text;
 
-    const cardStyle = colorParty
-      ? [styles.quoteCard, { backgroundColor: partyBg as Animated.AnimatedInterpolation<string> }]
-      : [styles.quoteCard];
-
-    const CardWrapper = colorParty ? Animated.View : ThemedView;
+    if (colorParty) {
+      return (
+        <Animated.View style={[styles.quoteCard, { backgroundColor: partyBg }]}>
+          <Pressable onLongPress={() => toggleReversed(item.id)}>
+            <ThemedText style={styles.quoteText}>"{displayText}"</ThemedText>
+          </Pressable>
+          <Pressable onPress={() => handleAuthorPress(item.author)}>
+            <ThemedText style={styles.quoteAuthor}>— {item.author}</ThemedText>
+          </Pressable>
+        </Animated.View>
+      );
+    }
 
     return (
-      <CardWrapper style={cardStyle}>
+      <ThemedView style={styles.quoteCard}>
         <Pressable onLongPress={() => toggleReversed(item.id)}>
           <ThemedText style={styles.quoteText}>"{displayText}"</ThemedText>
         </Pressable>
         <Pressable onPress={() => handleAuthorPress(item.author)}>
           <ThemedText style={styles.quoteAuthor}>— {item.author}</ThemedText>
         </Pressable>
-      </CardWrapper>
+      </ThemedView>
     );
   };
 
