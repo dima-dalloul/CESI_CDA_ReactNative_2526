@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { FlatList, Pressable, StyleSheet, TextInput } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Switch, TextInput } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Collapsible } from '@/components/ui/collapsible';
 import { Quote, quotes } from '@/constants/phrasesCultes';
+import { useThemeToggle } from '@/hooks/use-theme-toggle';
 
 export default function HomeScreen() {
   const [allQuotes, setAllQuotes] = useState<Quote[]>(
@@ -13,6 +14,7 @@ export default function HomeScreen() {
   const [quoteText, setQuoteText] = useState('');
   const [authorName, setAuthorName] = useState('');
   const [formOpen, setFormOpen] = useState(false);
+  const { isDark, toggleTheme } = useThemeToggle();
 
   const addQuote = () => {
     if (!quoteText.trim() || !authorName.trim()) return;
@@ -36,11 +38,14 @@ export default function HomeScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title" style={styles.title}>Phrases Cultes</ThemedText>
+      <ThemedView style={styles.header}>
+        <ThemedText type="title">Phrases Cultes</ThemedText>
+        <Switch value={isDark} onValueChange={toggleTheme} />
+      </ThemedView>
       <ThemedView style={styles.formWrapper}>
         <Collapsible title="Ajouter une phrase culte" isOpen={formOpen} onToggle={setFormOpen}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { color: isDark ? '#fff' : '#000' }]}
             placeholder="La phrase..."
             placeholderTextColor="#999"
             value={quoteText}
@@ -48,7 +53,7 @@ export default function HomeScreen() {
             multiline
           />
           <TextInput
-            style={styles.input}
+            style={[styles.input, { color: isDark ? '#fff' : '#000' }]}
             placeholder="Ton nom"
             placeholderTextColor="#999"
             value={authorName}
@@ -77,7 +82,10 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: 60,
   },
-  title: {
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 16,
     marginBottom: 16,
   },
@@ -92,7 +100,6 @@ const styles = StyleSheet.create({
     padding: 10,
     marginTop: 8,
     fontSize: 14,
-    color: '#fff',
   },
   addButton: {
     marginTop: 10,

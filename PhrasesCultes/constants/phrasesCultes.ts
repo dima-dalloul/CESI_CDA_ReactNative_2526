@@ -302,7 +302,7 @@ export const quotes: Quote[] = [
   },
   {
     id: '60',
-    text: "It Is Not A Bug, It Is A Feature !",
+    text: "It is not a Bug, It is a Feature !",
     author: 'Dima',
   },
 ];

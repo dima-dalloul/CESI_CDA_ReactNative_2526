@@ -5,7 +5,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useThemeToggle } from '@/hooks/use-theme-toggle';
 
 export function Collapsible({ children, title, isOpen: controlledIsOpen, onToggle }: PropsWithChildren & { title: string; isOpen?: boolean; onToggle?: (isOpen: boolean) => void }) {
   const [uncontrolledIsOpen, setUncontrolledIsOpen] = useState(false);
@@ -15,7 +15,8 @@ export function Collapsible({ children, title, isOpen: controlledIsOpen, onToggl
     setUncontrolledIsOpen(next);
     onToggle?.(next);
   };
-  const theme = useColorScheme() ?? 'light';
+  const { colorScheme } = useThemeToggle();
+  const theme = colorScheme ?? 'light';
 
   return (
     <ThemedView>
