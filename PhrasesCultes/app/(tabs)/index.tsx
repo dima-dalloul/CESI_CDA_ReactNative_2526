@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Switch, TextInput } from 'react-native';
+import { useRef, useState } from 'react';
+import { Animated, FlatList, Pressable, StyleSheet, Switch, TextInput } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -15,6 +15,19 @@ export default function HomeScreen() {
   const [authorName, setAuthorName] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const { isDark, toggleTheme } = useThemeToggle();
+  const wiggleAnim = useRef(new Animated.Value(0)).current;
+
+  const triggerWiggle = () => {
+    Animated.sequence([
+      Animated.timing(wiggleAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
+      Animated.timing(wiggleAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
+      Animated.timing(wiggleAnim, { toValue: 8, duration: 50, useNativeDriver: true }),
+      Animated.timing(wiggleAnim, { toValue: -8, duration: 50, useNativeDriver: true }),
+      Animated.timing(wiggleAnim, { toValue: 5, duration: 50, useNativeDriver: true }),
+      Animated.timing(wiggleAnim, { toValue: -5, duration: 50, useNativeDriver: true }),
+      Animated.timing(wiggleAnim, { toValue: 0, duration: 50, useNativeDriver: true }),
+    ]).start();
+  };
 
   const addQuote = () => {
     if (!quoteText.trim() || !authorName.trim()) return;
@@ -32,7 +45,9 @@ export default function HomeScreen() {
   const renderItem = ({ item }: { item: Quote }) => (
     <ThemedView style={styles.quoteCard}>
       <ThemedText style={styles.quoteText}>"{item.text}"</ThemedText>
-      <ThemedText style={styles.quoteAuthor}>— {item.author}</ThemedText>
+      <Pressable onPress={item.author.toLowerCase().includes('dima') ? triggerWiggle : undefined}>
+        <ThemedText style={styles.quoteAuthor}>— {item.author}</ThemedText>
+      </Pressable>
     </ThemedView>
   );
 
@@ -70,12 +85,14 @@ export default function HomeScreen() {
           </Pressable>
         </Collapsible>
       </ThemedView>
-      <FlatList
-        data={allQuotes}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={styles.list}
-      />
+      <Animated.View style={{ flex: 1, transform: [{ translateX: wiggleAnim }] }}>
+        <FlatList
+          data={allQuotes}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          contentContainerStyle={styles.list}
+        />
+      </Animated.View>
     </ThemedView>
   );
 }
