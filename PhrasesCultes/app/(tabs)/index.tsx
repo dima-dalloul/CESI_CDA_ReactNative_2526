@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { FlatList, Pressable, StyleSheet, TextInput } from 'react-native';
 
-import { Collapsible } from '@/components/ui/collapsible';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Collapsible } from '@/components/ui/collapsible';
 import { Quote, quotes } from '@/constants/phrasesCultes';
 
 export default function HomeScreen() {
@@ -12,6 +12,7 @@ export default function HomeScreen() {
   );
   const [quoteText, setQuoteText] = useState('');
   const [authorName, setAuthorName] = useState('');
+  const [formOpen, setFormOpen] = useState(false);
 
   const addQuote = () => {
     if (!quoteText.trim() || !authorName.trim()) return;
@@ -23,6 +24,7 @@ export default function HomeScreen() {
     setAllQuotes((prev) => [newQuote, ...prev]);
     setQuoteText('');
     setAuthorName('');
+    setFormOpen(false);
   };
 
   const renderItem = ({ item }: { item: Quote }) => (
@@ -36,7 +38,7 @@ export default function HomeScreen() {
     <ThemedView style={styles.container}>
       <ThemedText type="title" style={styles.title}>Phrases Cultes</ThemedText>
       <ThemedView style={styles.formWrapper}>
-        <Collapsible title="Ajouter une phrase">
+        <Collapsible title="Ajouter une phrase culte" isOpen={formOpen} onToggle={setFormOpen}>
           <TextInput
             style={styles.input}
             placeholder="La phrase..."
@@ -118,12 +120,13 @@ const styles = StyleSheet.create({
   },
   quoteText: {
     fontSize: 16,
-    fontStyle: 'italic',
+    fontWeight: '700',
     marginBottom: 8,
   },
   quoteAuthor: {
     fontSize: 14,
     fontWeight: '600',
+    fontStyle: 'italic',
   },
   quoteSource: {
     fontSize: 12,
