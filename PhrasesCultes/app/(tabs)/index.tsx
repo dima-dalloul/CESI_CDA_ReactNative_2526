@@ -40,7 +40,10 @@ export default function HomeScreen() {
     <ThemedView style={styles.container}>
       <ThemedView style={styles.header}>
         <ThemedText type="title">Phrases Cultes</ThemedText>
-        <Switch value={isDark} onValueChange={toggleTheme} />
+        <ThemedView style={{ alignItems: 'center' }}>
+          <Switch value={isDark} onValueChange={toggleTheme} />
+          <ThemedText style={{ fontSize: 12, opacity: 0.6 }}>{isDark ? 'Sombre' : 'Clair'}</ThemedText>
+        </ThemedView>
       </ThemedView>
       <ThemedView style={styles.formWrapper}>
         <Collapsible title="Ajouter une phrase culte" isOpen={formOpen} onToggle={setFormOpen}>

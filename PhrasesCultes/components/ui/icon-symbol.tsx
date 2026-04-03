@@ -18,6 +18,7 @@ const MAPPING = {
   'bubble.circle.fill': 'chat',
   'engineering': 'engineering',
   'wand.and.stars': 'auto-fix-high',
+  'group': 'group',
 } as IconMapping;
 
 /**
