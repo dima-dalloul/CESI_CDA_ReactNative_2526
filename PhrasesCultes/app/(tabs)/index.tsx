@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, FlatList, Pressable, StyleSheet, Switch, TextInput } from 'react-native';
+import { Animated, Dimensions, FlatList, Pressable, StyleSheet, Switch, TextInput } from 'react-native';
 import ConfettiCannon from 'react-native-confetti-cannon';
 
 import { ThemedText } from '@/components/themed-text';
@@ -11,6 +11,8 @@ import { useThemeToggle } from '@/hooks/use-theme-toggle';
 
 const STORAGE_KEY = 'user_quotes';
 const RAINBOW = ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#9400D3'];
+const EXPLOSION_EMOJIS = ['💥', '🔥', '💪', '👊', '⚡', '☠️', '🤯', '💣'];
+const PARTICLE_COUNT = 16;
 
 export default function HomeScreen() {
   const [allQuotes, setAllQuotes] = useState<Quote[]>(
@@ -65,6 +67,29 @@ export default function HomeScreen() {
 
   const [showConfetti, setShowConfetti] = useState(false);
   const confettiRef = useRef<ConfettiCannon | null>(null);
+
+  // Explosion for Chuck Norris
+  const [showExplosion, setShowExplosion] = useState(false);
+  const explosionAnims = useRef(
+    Array.from({ length: PARTICLE_COUNT }, () => ({
+      progress: new Animated.Value(0),
+      angle: Math.random() * Math.PI * 2,
+    }))
+  ).current;
+
+  const triggerExplosion = () => {
+    explosionAnims.forEach((p) => {
+      p.angle = Math.random() * Math.PI * 2;
+      p.progress.setValue(0);
+    });
+    setShowExplosion(true);
+    Animated.stagger(
+      30,
+      explosionAnims.map((p) =>
+        Animated.timing(p.progress, { toValue: 1, duration: 800, useNativeDriver: true })
+      )
+    ).start(() => setShowExplosion(false));
+  };
 
   const handleAuthorPress = (author: string) => {
     if (author.toLowerCase().includes('dima')) {
@@ -155,7 +180,7 @@ export default function HomeScreen() {
     if (colorParty) {
       return (
         <Animated.View style={[styles.quoteCard, { backgroundColor: partyBg }]}>
-          <Pressable onLongPress={() => toggleReversed(item.id)}>
+          <Pressable onLongPress={() => toggleReversed(item.id)} onPress={item.text.toLowerCase().includes('chuck norris') ? triggerExplosion : undefined}>
             <ThemedText style={styles.quoteText}>"{displayText}"</ThemedText>
           </Pressable>
           <Pressable onPress={() => handleAuthorPress(item.author)}>
@@ -167,7 +192,7 @@ export default function HomeScreen() {
 
     return (
       <ThemedView style={styles.quoteCard}>
-        <Pressable onLongPress={() => toggleReversed(item.id)}>
+        <Pressable onLongPress={() => toggleReversed(item.id)} onPress={item.text.toLowerCase().includes('chuck norris') ? triggerExplosion : undefined}>
           <ThemedText style={styles.quoteText}>"{displayText}"</ThemedText>
         </Pressable>
         <Pressable onPress={() => handleAuthorPress(item.author)}>
@@ -230,6 +255,26 @@ export default function HomeScreen() {
           fadeOut
           fallSpeed={3000}
         />
+      )}
+      {showExplosion && (
+        <ThemedView style={styles.explosionContainer} pointerEvents="none">
+          {explosionAnims.map((p, i) => {
+            const { width, height } = Dimensions.get('window');
+            const radius = Math.max(width, height) * 0.5;
+            const translateX = p.progress.interpolate({ inputRange: [0, 1], outputRange: [0, Math.cos(p.angle) * radius] });
+            const translateY = p.progress.interpolate({ inputRange: [0, 1], outputRange: [0, Math.sin(p.angle) * radius] });
+            const scale = p.progress.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0, 2, 0.5] });
+            const opacity = p.progress.interpolate({ inputRange: [0, 0.2, 1], outputRange: [0, 1, 0] });
+            return (
+              <Animated.Text
+                key={i}
+                style={[styles.particle, { opacity, transform: [{ translateX }, { translateY }, { scale }] }]}
+              >
+                {EXPLOSION_EMOJIS[i % EXPLOSION_EMOJIS.length]}
+              </Animated.Text>
+            );
+          })}
+        </ThemedView>
       )}
     </ThemedView>
   );
@@ -297,5 +342,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     opacity: 0.6,
     marginTop: 4,
+  },
+  explosionContainer: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  particle: {
+    position: 'absolute',
+    fontSize: 28,
   },
 });

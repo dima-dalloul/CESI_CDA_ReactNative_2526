@@ -32,7 +32,7 @@ export const quotes: Quote[] = [
   },
   {
     id: '6',
-    text: 'Death once had a near-Chuck-Norris experience.',
+    text: 'Death once had a near- Chuck-Norris experience.',
     author: 'Dima',
   },
   {
